@@ -1,8 +1,11 @@
 package com.example.chapter5
 
+import android.content.Context
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
+import android.view.inputmethod.EditorInfo
+import android.view.inputmethod.InputMethodManager
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.chapter5.databinding.ActivityMainBinding
 import com.tickaroo.tikxml.TikXml
@@ -19,7 +22,7 @@ class MainActivity : AppCompatActivity() {
     private lateinit var newsAdapter: NewsAdapter
 
     private var retrofit: Retrofit = Retrofit.Builder()
-        .baseUrl("http://www.yonhapnewstv.co.kr/category/news/")
+        .baseUrl("https://news.google.com/")
         .addConverterFactory(
             TikXmlConverterFactory.create(
                 TikXml.Builder()
@@ -41,8 +44,6 @@ class MainActivity : AppCompatActivity() {
             layoutManager = LinearLayoutManager(context)
             adapter = newsAdapter
         }
-
-        newsService.mainFeed().submitList()
 
         binding.feedChip.setOnClickListener {
             binding.chipGroup.clearCheck()
@@ -69,23 +70,40 @@ class MainActivity : AppCompatActivity() {
             binding.chipGroup.clearCheck()
             binding.socialChip.isChecked = true
 
-            newsService.socialNews().submitList()
+            newsService.societyNews().submitList()
         }
 
         binding.worldChip.setOnClickListener {
             binding.chipGroup.clearCheck()
             binding.worldChip.isChecked = true
 
-            newsService.worldNews().submitList()
+            newsService.itNews().submitList()
         }
 
         binding.sportChip.setOnClickListener {
             binding.chipGroup.clearCheck()
             binding.sportChip.isChecked = true
 
-            newsService.sportsNews().submitList()
+            newsService.sportNews().submitList()
         }
 
+        binding.searchTextInputEditText.setOnEditorActionListener { v, actionId, event ->
+            if(actionId == EditorInfo.IME_ACTION_SEARCH) {
+                binding.chipGroup.clearCheck()
+
+                binding.searchTextInputEditText.clearFocus()
+
+                val imm = getSystemService(Context.INPUT_METHOD_SERVICE) as InputMethodManager
+                imm.hideSoftInputFromWindow(v.windowToken, 0 )
+
+                newsService.search(binding.searchTextInputEditText.text.toString()).submitList()
+
+                return@setOnEditorActionListener true
+            }
+            return@setOnEditorActionListener false
+        }
+
+        newsService.mainFeed().submitList()
     }
 
     private fun Call<NewsRss>.submitList() {
