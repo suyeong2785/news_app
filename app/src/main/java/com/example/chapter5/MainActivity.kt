@@ -1,11 +1,13 @@
 package com.example.chapter5
 
 import android.content.Context
+import android.content.Intent
 import androidx.appcompat.app.AppCompatActivity
 import android.os.Bundle
 import android.util.Log
 import android.view.inputmethod.EditorInfo
 import android.view.inputmethod.InputMethodManager
+import androidx.core.view.isVisible
 import androidx.recyclerview.widget.LinearLayoutManager
 import com.example.chapter5.databinding.ActivityMainBinding
 import com.tickaroo.tikxml.TikXml
@@ -36,7 +38,13 @@ class MainActivity : AppCompatActivity() {
         binding = ActivityMainBinding.inflate(layoutInflater)
         setContentView(binding.root)
 
-        newsAdapter = NewsAdapter()
+        newsAdapter = NewsAdapter{url ->
+            startActivity(
+                Intent(this, WebViewActivity::class.java).apply {
+                    putExtra("url",url)
+                }
+            )
+        }
 
         val newsService = retrofit.create(NewsService::class.java)
 
@@ -115,9 +123,10 @@ class MainActivity : AppCompatActivity() {
                 val list = response.body()?.channel?.items.orEmpty().transform()
                 newsAdapter.submitList(list)
 
+                binding.notFoundView.isVisible = list.isEmpty()
+
                 list.forEachIndexed { index, news ->
                     Thread {
-
                         val jsoup = Jsoup.connect(news.link)
                             .get()
                         val elements = jsoup.select("meta[property^=og:]")
